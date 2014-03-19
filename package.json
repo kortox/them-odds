@@ -1,0 +1,17 @@
+{
+  "name": "them-odds",
+  "version": "0.0.0",
+  "description": "get them odds",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kortox",
+  "license": "MIT",
+  "dependencies": {
+    "ejs": "^0.8.5",
+    "logfmt": "^1.0.0-pre3",
+    "express": "^3.4.8",
+    "JSON": "^1.0.0"
+  }
+}
