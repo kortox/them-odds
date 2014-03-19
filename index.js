@@ -41,7 +41,7 @@ function renderOddsForSearchTerms(team, feed, response) {
     response.send("Odds for " + search_terms + odds);
 }
 
-function getOddsForTeam(content, team, response) {
+function getOddsForTeam(team, response) {
     if (Date.now() > cache["expiration"]) {
         var options = {
             host: 'www.sportsbooks.com',
@@ -81,16 +81,8 @@ app.get('/', function(req, res){
 });
 
 app.get('/search_form/', function(req, res){
-    search_terms = req.query.search_terms
-    //res.send("You searched: " + search_terms);
-    fs.readFile("odds.json", function (err, content) {
-        if (err) {
-            res.send("Couldn't find a team named: " + search_terms);
-        } else {
-            //res.send("Odds for " + search_terms + "<br/>" + getOddsForTeam(content, search_terms));
-            getOddsForTeam(content, search_terms, res);
-        }
-    });
+    search_terms = req.query.search_terms.trim().toLowerCase();
+    getOddsForTeam(search_terms, res);
 });
 
 // Start this sucker
