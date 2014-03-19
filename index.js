@@ -2,6 +2,7 @@ var express = require('express');
 var http = require('http');
 var path = require('path');
 var fs   = require('fs');
+var parseString = require('xml2js').parseString;
 
 /*
  * configure express app
@@ -20,12 +21,39 @@ app.configure(function(){
 /*
  * Retrieve odds
  */
-
-function getOddsForTeam(content, team) {
-    odds = JSON.parse(content);
-    data = odds[team.toLowerCase().trim()];
-    var p = "<table><tr><td>"+data["teams"][0]+"</td><td>"+data["LVH"][0]+"</td></tr><tr><td>"+data["teams"][1]+"</td><td>"+data["LVH"][1]+"</td></tr></table>";
-    return p;
+function getOddsForTeam(content, team, response) {
+    var options = {
+        host: 'www.sportsbooks.com',
+        path: '/lines/cgi/lines.cgi?&sport=201&ct=text/xml'
+    };
+    var req = http.get(options, function(res) {
+        console.log('STATUS: ' + res.statusCode);
+        console.log('HEADERS: ' + JSON.stringify(res.headers));
+        // Buffer the body entirely for processing as a whole.
+        var bodyChunks = [];
+        res.on('data', function(chunk) {
+            // collecting chunks
+            bodyChunks.push(chunk);
+        }).on('end', function() { // process the entire body
+            var body = Buffer.concat(bodyChunks);
+            parseString(body, function (err, result) { // we have a parsed up xml object
+                var d = result;
+                var feed = d["rss"]["channel"][0]["item"];
+                var odds = "";
+                for (var i = 0; i < feed.length; i++) {
+                    var item = feed[i];
+                    var description = item["description"][0];
+                    var title = item["title"][0];
+                    var re = new RegExp(team.trim(),"gi");
+                    var match = title.match(re);
+                    if (match) {
+                        odds += "<br>" + title + "<br>" + description
+                    }
+                }
+                response.send("Odds for " + search_terms + odds);
+            });
+        })
+    });
 }
 
 /*
@@ -42,7 +70,8 @@ app.get('/search_form/', function(req, res){
         if (err) {
             res.send("Couldn't find a team named: " + search_terms);
         } else {
-            res.send("Odds for " + search_terms + "<br/>" + getOddsForTeam(content, search_terms));
+            //res.send("Odds for " + search_terms + "<br/>" + getOddsForTeam(content, search_terms));
+            getOddsForTeam(content, search_terms, res);
         }
     });
 });
